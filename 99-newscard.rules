@@ -1,0 +1,10 @@
+# Motorola NewsCard: let the "plugdev" group use the card without root.
+# Install: sudo cp 99-newscard.rules /etc/udev/rules.d/ && sudo udevadm control --reload
+# Character devices: /dev/newscardN (raw + ioctls), /dev/newscardNattr, /dev/newscardNmsgs
+KERNEL=="newscard[0-9]*", SUBSYSTEM=="newscard", MODE="0660", GROUP="plugdev"
+# Read-only flash (MTD)
+SUBSYSTEM=="mtd", ATTR{name}=="newscard[0-9]*-flash", MODE="0440", GROUP="plugdev"
+SUBSYSTEM=="block", KERNEL=="mtdblock[0-9]*", ATTRS{name}=="newscard[0-9]*-flash", MODE="0440", GROUP="plugdev"
+# sysfs status files are world-readable; the write files (clock, alerts, markread,
+# delete) stay root-only. Allow the group to write them:
+SUBSYSTEM=="newscard", KERNEL=="newscard[0-9]*", ACTION=="add", RUN+="/bin/sh -c 'cd /sys%p && chgrp plugdev clock alerts markread delete && chmod g+w clock alerts markread delete'"
